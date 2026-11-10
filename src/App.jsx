@@ -50,6 +50,14 @@ function App() {
     updateItems(calculateField(items, index, field))
   }
 
+  function onBackupChange(index, checked) {
+    const next = items.map((item, i) => i === index
+      ? { ...item, backup: checked, warnings: { ...(item.warnings || {}), backup: false } }
+      : item)
+    updateItems(next)
+    updateItems(calculateField(items, index, 'backup'))
+  }
+
   function focusNext(index, field) {
     const nextIndex = index + 1
     if (nextIndex < items.length) inputRefs.current[`${nextIndex}-${field}`]?.focus()
@@ -281,8 +289,7 @@ function App() {
                         ref={el => { inputRefs.current[`${index}-backup`] = el }}
                         type="checkbox"
                         checked={!!item.backup}
-                        onChange={e => editField(index, 'backup', e.target.checked)}
-                        onBlur={() => blurField(index, 'backup')}
+                        onChange={e => onBackupChange(index, e.target.checked)}
                         onKeyDown={e => handleKeyDown(e, index, 'backup')}
                       />
                       <span className="checkbox-custom"/>

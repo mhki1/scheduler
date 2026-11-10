@@ -160,9 +160,9 @@ export function calculateField(source, index, field) {
     }
   }
 
-  alert("item.backup = " + item.backup)  // checkbox reflex bug here
-  
-  if (field === 'backup' && !!item.backup) {
+  console.log("item.backup = " + item.backup) // for debug only
+
+  if (field === 'backup' && !item.backup) {
     if (prev && !prev.backup) {
       const prevEnd = minutesOrNull(prev.end)
       const prevDrive = integerOrNull(prev.drive) ?? 0
