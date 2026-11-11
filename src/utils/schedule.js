@@ -200,13 +200,10 @@ export function calculateField(source, index, field) {
  * "Backup" rows are normalized/validated but skip the time adjustment.
  */
 export function updateDirection(source, anchorIndex, direction) {
-  console.log("updateDirection start at anchorIndex = " + anchorIndex)
   let items = source.map(x => ({ ...x, warnings: { ...(x.warnings || {}) } }))
   const step = direction === 'up' ? -1 : 1
   let prevIndex = anchorIndex
   let currentIndex = anchorIndex + step
-
-    console.log("[init] currentIndex = " + currentIndex + " / prevIndex = " + prevIndex)
 
   let prev = normalizeItem(items[prevIndex], true)  
   let start = minutesOrNull(prev.start)
@@ -231,8 +228,7 @@ export function updateDirection(source, anchorIndex, direction) {
   prev.duration = String(end - start)
   items[prevIndex] = prev
   
-  while (currentIndex > 0 && currentIndex < items.length-1) {
-    console.log("[loop] currentIndex = " + currentIndex + " / prevIndex = " + prevIndex)
+  while (currentIndex > 0 && currentIndex < items.length-2) {
     const current = normalizeItem(items[currentIndex], true)
     items[currentIndex] = current
     prev = items[prevIndex]
@@ -246,13 +242,12 @@ export function updateDirection(source, anchorIndex, direction) {
     }
 
     if (direction === 'up') {
-      end = minutesOrNull(prev.start) - (current.drive ?? 0)
-      start = minutesOrNull(end) - duration
+      end = minutesOrNull(prev.start) - integerOrNull(current.drive ?? 0)
+      start = end - duration
     }
     else {
-      start = minutesOrNull(prev.end) + (prev.drive ?? 0)
-      end = minutesOrNull(start) + duration
-      console.log("check value start = " + start + " / end = " + end)
+      start = minutesOrNull(prev.end) + integerOrNull(prev.drive ?? 0)
+      end = start + duration
     }
     
     current.start = formatTime(start)
@@ -262,6 +257,16 @@ export function updateDirection(source, anchorIndex, direction) {
     prevIndex = currentIndex
     currentIndex += step
   }
+
+  const lastone = normalizeItem(items[currentIndex], true)
+  if (direction === 'up') {
+    lastone.end = formatTime(minutesOrNull(items[prevIndex].start) + integerOrNull(lastone.drive ?? 0))
+  }
+  else {
+    lastone.start = formatTime(minutesOrNull(items[prevIndex].end) + integerOrNull(items[prevIndex].drive ?? 0))
+  }
+  items[currentIndex] = lastone
+
 /*
     // Backup-plan rows are checked and normalized, but are not shifted.
     if (!current.backup) {
