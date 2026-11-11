@@ -76,6 +76,7 @@ h1 { margin:0; font:800 25px 'Manrope',sans-serif; letter-spacing:-.7px; }
 .update-cell { display:flex; justify-content:left; gap:3px; }
 .icon-button { width:31px; height:31px; display:grid; place-items:center; border:1px solid transparent; border-radius:7px; background:transparent; color:#718096; }
 .icon-button:hover { background:#edf2ff; border-color:#dce5ff; color:#315bd5; }
+.icon-button:disabled { color: #dad8d8; cursor: not-allowed; }
 .insert-row { min-width:950px; height:0; position:relative; z-index:2; display:flex; justify-content:center; }
 .insert-button { position:relative; top:1px; display:flex; align-items:center; gap:4px; border:1px solid #dbe5ff; border-radius:99px; background:#fff; color:#4567c5; padding:4px 10px; font-size:10px; font-weight:600; opacity:0; transition:.15s; box-shadow:0 2px 6px #243b6810; }
 .insert-hover-area { position: absolute; top: 0; left: 30%; right: 30%; width: 40%; height: 13px; z-index: 1; }

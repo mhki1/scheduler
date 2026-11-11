@@ -54,8 +54,7 @@ function App() {
     const next = items.map((item, i) => i === index
       ? { ...item, backup: checked, warnings: { ...(item.warnings || {}), backup: false } }
       : item)
-    updateItems(next)
-    updateItems(calculateField(items, index, 'backup'))
+    updateItems(calculateField(next, index, 'backup'))
   }
 
   function focusNext(index, field) {
@@ -128,7 +127,7 @@ function App() {
     const result = updateDirection(items, index, direction)
     updateItems(result.items)
     if (result.stoppedAt != null) {
-      setMessage(`Update stopped at item #${result.stoppedAt + 1}: ${result.reason}`)
+      setMessage(`Update stopped at item #${result.stoppedAt + 1} (${items[result.stoppedAt].name}) : ${result.reason}`)
       setMessageType('warning')
     } else {
       setMessage(`Update ${direction === 'up' ? '↑' : '↓'} completed.`)
@@ -297,8 +296,8 @@ function App() {
                   </div>
                   <div className="update-cell">
                     {!blank && <>
-                      <button className="icon-button" title="Update upwards" onClick={() => runUpdate(index, 'up')}><ArrowUp size={17}/></button>
-                      <button className="icon-button" title="Update downwards" onClick={() => runUpdate(index, 'down')}><ArrowDown size={17}/></button>
+                      <button className="icon-button" title="Update upwards" disabled={!!item.backup} onClick={() => runUpdate(index, 'up')}><ArrowUp size={17}/></button>
+                      <button className="icon-button" title="Update downwards" disabled={!!item.backup} onClick={() => runUpdate(index, 'down')}><ArrowDown size={17}/></button>
                     </>}
                   </div>
                 </div>

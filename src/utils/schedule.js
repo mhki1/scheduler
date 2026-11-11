@@ -93,7 +93,7 @@ export function calculateField(source, index, field) {
         return items
       }
     }
-    else if (end == null && duration == null) return items
+    if (end == null && duration == null) return items
     else if (end != null && duration != null) {
       const calculatedEnd = start + duration
       if (end != calculatedEnd) {
@@ -160,9 +160,8 @@ export function calculateField(source, index, field) {
     }
   }
 
-  console.log("item.backup = " + item.backup) // for debug only
-
   if (field === 'backup' && !item.backup) {
+    clearWarning(items, index, 'start')
     if (prev && !prev.backup) {
       const prevEnd = minutesOrNull(prev.end)
       const prevDrive = integerOrNull(prev.drive) ?? 0
@@ -172,15 +171,20 @@ export function calculateField(source, index, field) {
       }
     }
     if (start != null && end != null) {
+      clearWarning(items, index, 'end')
       if (start > end) {
         setWarning(items, index, 'end')
         return items
       }
+      clearWarning(items, index, 'duration')
       if (duration != null && end - start != duration)  {
         setWarning(items, index, 'duration')
         return items
       }
     }
+  }
+  else if (field === 'backup' && item.backup) {
+    clearWarning(items, index + 1, 'start')
   }
   
   if (item.backup || !next || next.backup) return items
@@ -196,59 +200,68 @@ export function calculateField(source, index, field) {
  * "Backup" rows are normalized/validated but skip the time adjustment.
  */
 export function updateDirection(source, anchorIndex, direction) {
+  console.log("updateDirection start at anchorIndex = " + anchorIndex)
   let items = source.map(x => ({ ...x, warnings: { ...(x.warnings || {}) } }))
   const step = direction === 'up' ? -1 : 1
   let prevIndex = anchorIndex
   let currentIndex = anchorIndex + step
 
-  const prev = normalizeItem(items[prevIndex], true)
-  if (direction === 'down' || prev.start == '') {
-    const check = [prev.start, prev.end, prev.duration]
-    if (check.filter(v => v === '').length >= 2) return { items, stoppedAt: prevIndex, reason: 'Insufficient data.' }
-    const start = minutesOrNull(prev.start)
-    const end = minutesOrNull(prev.start)
-    const duration = integerOrNull(prev.duration)
-    if (start == null) prev.start = formatTime(end - duration)
-    else if (end == null) prev.end = formatTime(start + duration)
-    else prev.duration = String(end - start)
-  }
-  
-  items[prevIndex] = prev
-  /*
+    console.log("[init] currentIndex = " + currentIndex + " / prevIndex = " + prevIndex)
 
+  let prev = normalizeItem(items[prevIndex], true)  
+  let start = minutesOrNull(prev.start)
+  let end = minutesOrNull(prev.end)
+  let duration = integerOrNull(prev.duration)
+
+  const checkEmpty = [start, end, duration].filter(v => v == null).length
+  if (checkEmpty === 0)  {
+    if (start + duration != end) end = start + duration
+  }
+  else if (checkEmpty === 1)  {
+    if (start == null) start = end - duration
+    else if (end == null) end = start + duration
+    else duration = end - start
+  }
+  else if (checkEmpty >= 3) return { items, stoppedAt: prevIndex, reason: 'Insufficient data.' }
+  else if ((direction === 'up' && start == null) || (direction === 'down' && end == null))
+    return { items, stoppedAt: prevIndex, reason: 'Insufficient data.' }
+  
+  prev.start = formatTime(start)
+  prev.end = formatTime(end)
+  prev.duration = String(end - start)
+  items[prevIndex] = prev
+  
   while (currentIndex > 0 && currentIndex < items.length-1) {
+    console.log("[loop] currentIndex = " + currentIndex + " / prevIndex = " + prevIndex)
     const current = normalizeItem(items[currentIndex], true)
     items[currentIndex] = current
-    const prev = items[prevIndex]
+    prev = items[prevIndex]
+    start = minutesOrNull(current.start)
+    end = minutesOrNull(current.end)
+    duration = integerOrNull(current.duration)
 
-    const values = [current.start, current.end, current.duration]
-    const emptyCount = values.filter(v => v === '').length
-    let start = minutesOrNull(current.start)
-    let end = minutesOrNull(current.end)
-    let duration = integerOrNull(current.duration)
+    if (duration == null) {
+      if (start != null && end != null && start <= end) duration = end - start
+      else return { items, stoppedAt: currentIndex, reason: 'Duration is mandatory for update.' }
+    }
 
     if (direction === 'up') {
-      if (prev.start == null) {
-        if (prev.end == null || prev.duration == null) return { items, stoppedAt: prevIndex, reason: 'Insufficient data.' }
-        else prev.start = prev.end - prev.duration
-      }
-      end = minutesOrNull(prev.start - (current.drive ?? 0))
-      source[currentIndex].end = formatTime(end)
-      if (duration == null) return { items, stoppedAt: currentIndex, reason: 'Duration is mandatory.' }
-      start = minutesOrNull(end - duration)
-      source[currentIndex].start = formatTime(start)
+      end = minutesOrNull(prev.start) - (current.drive ?? 0)
+      start = minutesOrNull(end) - duration
     }
     else {
-      if (prev.end == null) {
-        if (prev.start == null || prev.duration == null) return { items, stoppedAt: prevIndex, reason: 'Insufficient data.' }
-        else prev.end = prev.start + prev.duration
-      }
-      start = minutesOrNull(prev.end + (prev.drive ?? 0))
-      source[currentIndex].start = formatTime(start)
-      if (duration == null) return { items, stoppedAt: currentIndex, reason: 'Duration is mandatory.' }
-      end = minutesOrNull(start + duration)
-      source[currentIndex].end = formatTime(end)
+      start = minutesOrNull(prev.end) + (prev.drive ?? 0)
+      end = minutesOrNull(start) + duration
+      console.log("check value start = " + start + " / end = " + end)
     }
+    
+    current.start = formatTime(start)
+    current.end = formatTime(end)
+    current.duration = String(duration)
+    items[currentIndex] = current
+    prevIndex = currentIndex
+    currentIndex += step
+  }
 /*
     // Backup-plan rows are checked and normalized, but are not shifted.
     if (!current.backup) {
@@ -278,11 +291,6 @@ export function updateDirection(source, anchorIndex, direction) {
         current.duration = String(currentEnd - newStart)
       }
     }
-
-    items[currentIndex] = current
-    prevIndex = currentIndex
-    currentIndex += step
-  }
 */
   return { items, stoppedAt: null, reason: null }
 }
