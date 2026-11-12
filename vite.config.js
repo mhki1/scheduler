@@ -5,5 +5,5 @@ export default defineConfig({
   plugins: [react()],
   // Change this to the folder URL where you deploy the app.
   // Example: '/wp-content/uploads/my-app/'
-  base: '/',
+  base: '/scheduler/',
 })
