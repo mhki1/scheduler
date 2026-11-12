@@ -197,13 +197,14 @@ export function calculateField(source, index, field) {
 
 /**
  * Recalculate outward from selected index. The selected row is the anchor.
- * "Backup" rows are normalized/validated but skip the time adjustment.
+ * "Backup" rows are normalized but skip the time adjustment.
  */
 export function updateDirection(source, anchorIndex, direction) {
   let items = source.map(x => ({ ...x, warnings: { ...(x.warnings || {}) } }))
   const step = direction === 'up' ? -1 : 1
   let prevIndex = anchorIndex
   let currentIndex = anchorIndex + step
+  if (currentIndex < 0 || currentIndex > items.length-2) return null
 
   let prev = normalizeItem(items[prevIndex], true)  
   let start = minutesOrNull(prev.start)
@@ -225,12 +226,17 @@ export function updateDirection(source, anchorIndex, direction) {
   
   prev.start = formatTime(start)
   prev.end = formatTime(end)
-  prev.duration = String(end - start)
+  prev.duration = String(checkEmpty==2? '': end-start)
   items[prevIndex] = prev
-  
+
   while (currentIndex > 0 && currentIndex < items.length-2) {
     const current = normalizeItem(items[currentIndex], true)
     items[currentIndex] = current
+    if (current.backup) {
+      currentIndex += step
+      continue
+    }
+
     prev = items[prevIndex]
     start = minutesOrNull(current.start)
     end = minutesOrNull(current.end)
@@ -259,44 +265,16 @@ export function updateDirection(source, anchorIndex, direction) {
   }
 
   const lastone = normalizeItem(items[currentIndex], true)
-  if (direction === 'up') {
-    lastone.end = formatTime(minutesOrNull(items[prevIndex].start) + integerOrNull(lastone.drive ?? 0))
-  }
-  else {
-    lastone.start = formatTime(minutesOrNull(items[prevIndex].end) + integerOrNull(items[prevIndex].drive ?? 0))
-  }
-  items[currentIndex] = lastone
-
-/*
-    // Backup-plan rows are checked and normalized, but are not shifted.
-    if (!current.backup) {
-      const prev = items[prevIndex]
-      if (direction === 'up') {
-        const prevStart = minutesOrNull(prev.start)
-        if (prevStart == null) return { items, stoppedAt: currentIndex, reason: 'Previous item start time is empty or invalid.' }
-        const newEnd = prevStart - drive
-        if (newEnd < 0) return { items, stoppedAt: currentIndex, reason: 'Calculated end time would be negative.' }
-        current.end = formatTime(newEnd)
-        const currentStart = minutesOrNull(current.start)
-        if (currentStart == null || newEnd < currentStart) {
-          return { items, stoppedAt: currentIndex, reason: 'Adjusted end time would be earlier than start time.' }
-        }
-        current.duration = String(newEnd - currentStart)
-      } else {
-        const prevEnd = minutesOrNull(prev.end)
-        const prevDrive = integerOrNull(prev.drive)
-        if (prevEnd == null || prevDrive == null) return { items, stoppedAt: currentIndex, reason: 'Previous item end time or drive time is empty or invalid.' }
-        const newStart = prevEnd - prevDrive
-        if (newStart < 0) return { items, stoppedAt: currentIndex, reason: 'Calculated start time would be negative.' }
-        const currentEnd = minutesOrNull(current.end)
-        if (currentEnd == null || currentEnd < newStart) {
-          return { items, stoppedAt: currentIndex, reason: 'Adjusted start time would be later than end time.' }
-        }
-        current.start = formatTime(newStart)
-        current.duration = String(currentEnd - newStart)
-      }
+  if (!lastone.backup) {
+    if (direction === 'up') {
+      lastone.end = formatTime(minutesOrNull(items[prevIndex].start) - integerOrNull(lastone.drive ?? 0))
     }
-*/
+    else {
+    lastone.start = formatTime(minutesOrNull(items[prevIndex].end) + integerOrNull(items[prevIndex].drive ?? 0))
+    }
+    items[currentIndex] = lastone
+  }
+
   return { items, stoppedAt: null, reason: null }
 }
 

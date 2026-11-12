@@ -125,6 +125,7 @@ function App() {
 
   function runUpdate(index, direction) {
     const result = updateDirection(items, index, direction)
+    if (!result) return
     updateItems(result.items)
     if (result.stoppedAt != null) {
       setMessage(`Update stopped at item #${result.stoppedAt + 1} (${items[result.stoppedAt].name}) : ${result.reason}`)
