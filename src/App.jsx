@@ -202,6 +202,21 @@ function App() {
             </button>
           }
         </div>
+        <div className="toolbar-left-mobile">
+          <button className={`btn ${ioOpen ? 'btn-info' : 'btn-secondary'}`} onClick={openImportExport}>
+            <Clipboard size={16}/>{ioOpen ? 'Close' : trashMode ? 'Import' : 'Import / Export'}
+            {ioOpen ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
+          </button>
+          <button className={`btn ${trashMode ? 'btn-info' : 'btn-secondary'}`} onClick={toggleTrash}>
+            {trashMode ? <Undo2 size={16}/> : <Trash2 size={16}/>}
+            {trashMode ? 'Stop' : 'Delete Items'}
+          </button>
+          {trashMode &&
+            <button className="btn btn-danger" onClick={deleteAll}>
+              <Eraser size={16}/>Delete All
+            </button>
+          }
+        </div>
         <div className="toolbar-right">
           <span className="item-count">{populatedCount} {populatedCount === 1 ? 'item' : 'items'}</span>
           <button className="btn btn-primary" onClick={() => inputRefs.current[`${items.length - 1}-start`]?.focus()}>
@@ -278,11 +293,11 @@ function App() {
                           onDragEnd={() => setDragIndex(null)}
                         ><GripVertical size={19}/></span>}
                   </div>
-                  <Field item={item} index={index} field="start" label="Start time" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
-                  <Field item={item} index={index} field="end" label="End time" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
-                  <Field item={item} index={index} field="duration" label="Duration (min)" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
-                  <Field item={item} index={index} field="name" label="Item name" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
-                  <Field item={item} index={index} field="drive" label="Drive time (min)" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
+                  <Field item={item} index={index} field="start" label="Start Time" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
+                  <Field item={item} index={index} field="end" label="End Time" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
+                  <Field item={item} index={index} field="duration" label="Duration (min.)" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
+                  <Field item={item} index={index} field="name" label="Item Description" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
+                  <Field item={item} index={index} field="drive" label="Drive Time (min.)" refs={inputRefs} editField={editField} blurField={blurField} handleKeyDown={handleKeyDown}/>
                   <div className="backup-cell">
                     <label className="checkbox-wrap" title="Backup plan">
                       <input
