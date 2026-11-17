@@ -163,7 +163,7 @@ export function calculateField(source, index, field) {
   if (field === 'drive') {
     if (next != null && !next.backup && end != null && drive == null) {
       const nextStart = minutesOrNull(next.start)
-      if (next.start != null) items[index].drive = String(nextStart - end)
+      if (nextStart != null) items[index].drive = String(nextStart - end)
     }
   }
 
