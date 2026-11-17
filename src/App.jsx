@@ -85,6 +85,7 @@ function App() {
     if (!window.confirm("Are you sure you want to delete all records?")) return;
     localStorage.removeItem(STORAGE_KEY);
     setItems([blankItem()]);
+    setIoOpen(false)
     setTrashMode(false)
   }
 
@@ -150,6 +151,7 @@ function App() {
     }
     if (populatedCount > 0 && !window.confirm('This will replace your current schedule. Continue?')) return
     updateItems(result.items)
+    setIoOpen(false)
     setMessage('Schedule imported successfully.')
     setMessageType('success')
   }
@@ -158,6 +160,7 @@ function App() {
     const text = exportText(items)
     try {
       await navigator.clipboard.writeText(text)
+      setIoOpen(false)
       setMessage('Schedule text copied to clipboard.')
       setMessageType('success')
     } catch {
