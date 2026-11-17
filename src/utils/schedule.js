@@ -161,7 +161,7 @@ export function calculateField(source, index, field) {
   }
 
   if (field === 'drive') {
-    if (next != null && end != null && drive == null) {
+    if (next != null && !next.backup && end != null && drive == null) {
       const nextStart = minutesOrNull(next.start)
       if (next.start != null) items[index].drive = String(nextStart - end)
     }
@@ -322,5 +322,16 @@ export function exportText(items) {
     const backup = x.backup ? '1' : '0'
     const name = (x.name || ' ').trim()
     return `${start} - ${end} ${duration} ${name || '-'} ${drive} ${backup}`
+  }).join('\n')
+}
+
+export function exportFormattedSchedule(items) {
+  return items.filter(x => !isBlankItem(x) && !x.backup).map(x => {
+    const start = x.start || '00:00'
+    const end = x.end || '00:00'
+    const drive = x.drive || '0'
+    const backup = x.backup ? '1' : '0'
+    const name = (x.name || ' ').trim()
+    return `${start} - ${end}　${name || '-'}`
   }).join('\n')
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Undo2, Eraser, X, Download, Upload, Clipboard, CalendarDays, AlertTriangle } from 'lucide-react'
-import { blankItem, calculateField, ensureTrailingBlank, exportText, isBlankItem, parseImport, updateDirection } from './utils/schedule'
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronUp, GripVertical, Plus, Trash2, Undo2, Eraser, X, Download, Upload, CalendarArrowDown, Clipboard, CalendarDays, AlertTriangle } from 'lucide-react'
+import { blankItem, calculateField, ensureTrailingBlank, exportText, exportFormattedSchedule, isBlankItem, parseImport, updateDirection } from './utils/schedule'
 
 const STORAGE_KEY = 'schedule-planner'
 const fields = ['start', 'end', 'duration', 'name', 'drive']
@@ -170,6 +170,20 @@ function App() {
     }
   }
 
+  async function copyExportFormatted() {
+    const text = exportFormattedSchedule(items)
+    try {
+      await navigator.clipboard.writeText(text)
+      setIoOpen(false)
+      setMessage('Schedule text copied to clipboard.')
+      setMessageType('success')
+    } catch {
+      setIoText(text)
+      setMessage('Clipboard access is unavailable. Select and copy the text manually.')
+      setMessageType('info')
+    }
+  }
+
   function handleDrop(targetIndex) {
     if (dragIndex == null) return
     moveItem(dragIndex, targetIndex)
@@ -235,8 +249,11 @@ function App() {
           </div>
           <textarea className="io-textarea" value={ioText} onChange={e => setIoText(e.target.value)} placeholder={'12:00 - 13:00 60 Lunch hour 30 0'} rows={6}/>
           <div className="io-actions">
-            <button className="btn btn-secondary" onClick={copyExport}><Download size={15}/> Copy Current Schedule</button>
+            <button className="btn btn-secondary" onClick={copyExport}><Download size={15}/> Copy Export Text</button>
+            <button className="btn btn-secondary" onClick={copyExportFormatted}><CalendarArrowDown size={15}/> Copy Formatted Schedule</button>
             <button className="btn btn-primary" onClick={importSchedule}><Upload size={15}/> Import Text</button>
+
+            
           </div>
           <p className="format-hint">Format: Start - End Duration Item_Description Drive_Time Backup (1 or 0). Empty times export as 00:00; empty minute values export as 0.</p>
         </section>
